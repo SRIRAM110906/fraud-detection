@@ -8,10 +8,13 @@ Endpoints:
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.predict import FraudPredictor, get_predictor
@@ -60,6 +63,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static web frontend assets
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 
 
 # ==============================================================================
@@ -140,9 +149,24 @@ class HealthResponse(BaseModel):
 # Route Handlers
 # ==============================================================================
 
-@app.get("/", tags=["Info"])
-def root() -> Dict[str, Any]:
-    """Root info endpoint."""
+@app.get("/", tags=["UI"])
+def root():
+    """Serve the interactive FraudGuard AI web interface."""
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return {
+        "service": "AI-Powered Credit Card Fraud Detection API",
+        "version": "1.0.0",
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "predict_url": "/predict",
+    }
+
+
+@app.get("/api", tags=["Info"])
+def api_info() -> Dict[str, Any]:
+    """Root info endpoint returning API schema links."""
     return {
         "service": "AI-Powered Credit Card Fraud Detection API",
         "version": "1.0.0",

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FraudGuard AI - Real-Time Intelligent Risk Scoring</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+
+  <!-- Left Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span>FraudGuard AI</span>
+    </div>
+
+    <nav class="sidebar-menu">
+      <button class="nav-item" data-target="dashboard-page">Dashboard</button>
+      <button class="nav-item active" data-target="simulator-page">
+        <span>Simulator</span>
+        <span id="sidebar-active-tx" style="font-size: 11px; margin-left: auto; color: #38bdf8;">TX-88232</span>
+      </button>
+      <button class="nav-item" data-target="explainability-page">Explainability</button>
+      <button class="nav-item" data-target="comparison-page">Model comparison</button>
+      <button class="nav-item" data-target="queue-page">
+        <span>Analyst queue</span>
+        <span class="nav-badge" id="sidebar-queue-badge">3</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div>ML Engine: XGBoost v1.3</div>
+      <div>Threshold: τ = 0.80</div>
+      <div>API Status: <span style="color: #34d399;">● Online</span></div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-wrapper">
+
+    <!-- PAGE 1: DASHBOARD -->
+    <section id="dashboard-page" class="page-container">
+      <header class="top-header">
+        <h1 class="page-title">Executive Fraud Monitoring Dashboard</h1>
+        <span class="pill-badge">System live · Real-time</span>
+      </header>
+
+      <div class="grid-4col">
+        <div class="kpi-card">
+          <div class="kpi-label">Transactions Scored</div>
+          <div class="kpi-value" id="kpi-scored">284,807</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Frauds Prevented</div>
+          <div class="kpi-value" style="color: #dc2626;" id="kpi-frauds">492</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Recall (Catch Rate)</div>
+          <div class="kpi-value green">92.4%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">False Positive Rate</div>
+          <div class="kpi-value blue">0.08%</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Recent Scored Transactions Stream</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tx ID</th>
+              <th>Time</th>
+              <th>Amount</th>
+              <th>Merchant / Type</th>
+              <th>Risk Score</th>
+              <th>Decision</th>
+            </tr>
+          </thead>
+          <tbody id="transactions-feed">
+            <tr>
+              <td><strong>TX-88232</strong></td>
+              <td>02:14 AM</td>
+              <td>$2,149.00</td>
+              <td>Electronics (Foreign)</td>
+              <td>97.2%</td>
+              <td><span class="badge-status block">BLOCK</span></td>
+            </tr>
+            <tr>
+              <td><strong>TX-88233</strong></td>
+              <td>02:10 AM</td>
+              <td>$310.55</td>
+              <td>Online Retail</td>
+              <td>58.0%</td>
+              <td><span class="badge-status review">REVIEW</span></td>
+            </tr>
+            <tr>
+              <td><strong>TX-88225</strong></td>
+              <td>01:58 AM</td>
+              <td>$42.10</td>
+              <td>Supermarket (Local)</td>
+              <td>0.3%</td>
+              <td><span class="badge-status approve">APPROVE</span></td>
+            </tr>
+            <tr>
+              <td><strong>TX-88219</strong></td>
+              <td>01:45 AM</td>
+              <td>$1,260.00</td>
+              <td>Travel (Foreign IP)</td>
+              <td>66.0%</td>
+              <td><span class="badge-status review">REVIEW</span></td>
+            </tr>
+            <tr>
+              <td><strong>TX-88204</strong></td>
+              <td>01:12 AM</td>
+              <td>$75.20</td>
+              <td>Grocery Store</td>
+              <td>52.0%</td>
+              <td><span class="badge-status review">REVIEW</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PAGE 2: SIMULATOR (IMAGE 2) -->
+    <section id="simulator-page" class="page-container active-page">
+      <header class="top-header">
+        <h1 class="page-title">Live transaction simulator</h1>
+        <span class="pill-badge" id="api-status-badge">API live · 42 ms</span>
+      </header>
+
+      <div class="grid-2col">
+        <!-- Enter Transaction Card -->
+        <div class="card">
+          <h2 class="card-title">Enter transaction</h2>
+
+          <div class="presets-row">
+            <span class="preset-chip" onclick="loadPreset('high_risk')">🚨 Preset: High Risk ($2,149)</span>
+            <span class="preset-chip" onclick="loadPreset('legit')">✅ Preset: Normal ($42.50)</span>
+            <span class="preset-chip" onclick="loadPreset('review')">⚠️ Preset: Medium ($310)</span>
+          </div>
+
+          <form id="simulator-form" onsubmit="handleScoreTransaction(event)">
+            <div class="form-group">
+              <label class="form-label" for="input-amount">Amount (USD)</label>
+              <input type="text" id="input-amount" class="form-input" value="2149.00" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-time">Time of transaction</label>
+              <input type="text" id="input-time" class="form-input" value="02:14 AM" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-category">Merchant category</label>
+              <input type="text" id="input-category" class="form-input" value="Electronics" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-location">Location</label>
+              <input type="text" id="input-location" class="form-input" value="Foreign country" required>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btn-score">Score transaction</button>
+          </form>
+        </div>
+
+        <!-- Prediction Result Card -->
+        <div class="card">
+          <h2 class="card-title">Prediction result</h2>
+
+          <div class="prediction-box" id="prediction-box">
+            <div class="prediction-status-title" id="res-status-title">HIGH RISK: BLOCK</div>
+            <div class="prediction-subtitle">Fraud probability</div>
+            <div class="progress-track">
+              <div class="progress-fill" id="res-progress-fill" style="width: 97.2%;"></div>
+            </div>
+            <div class="probability-number" id="res-prob-val">97.2%</div>
+          </div>
+
+          <div class="meta-footer">
+            <div class="meta-footer-line" id="meta-post-line">POST /predict · Response time 38 ms</div>
+            <div class="meta-footer-line" id="meta-model-line">Model: XGBoost v1.3 · Threshold: 0.80</div>
+            <div class="meta-footer-line" id="meta-action-line">Action: alert sent to dashboard</div>
+          </div>
+
+          <!-- Multi-Dashboard Sync Banner -->
+          <div class="sync-banner" id="sim-sync-banner">
+            <div class="sync-banner-title">
+              <span>⚡ Live Synchronization Active across all 5 Dashboards</span>
+            </div>
+            <div class="sync-banner-items">
+              <span>📊 <strong>Dashboard:</strong> Added to live stream & KPIs updated</span>
+              <span>🔍 <strong>Explainability:</strong> SHAP feature drivers computed</span>
+              <span>🔬 <strong>Model comparison:</strong> Evaluated across all 3 models</span>
+              <span>🛡️ <strong>Analyst queue:</strong> <span id="sync-queue-status">Auto-routed for review</span></span>
+            </div>
+            <div class="jump-buttons-row">
+              <button type="button" class="btn-jump" onclick="jumpToTab('explainability-page')">Inspect SHAP Drivers ➔</button>
+              <button type="button" class="btn-jump" onclick="jumpToTab('comparison-page')">See 3-Model Comparison ➔</button>
+              <button type="button" class="btn-jump" onclick="jumpToTab('queue-page')">Check Review Queue ➔</button>
+              <button type="button" class="btn-jump" onclick="jumpToTab('dashboard-page')">View in Dashboard ➔</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 3: EXPLAINABILITY (IMAGE 3) -->
+    <section id="explainability-page" class="page-container">
+      <header class="top-header">
+        <h1 class="page-title" id="shap-header-title">Why was TX-88232 flagged? (SHAP)</h1>
+        <span class="pill-badge">API live · 42 ms</span>
+      </header>
+
+      <div class="grid-2col" style="grid-template-columns: 1.35fr 1fr;">
+        <!-- Left: Feature Contributions Card -->
+        <div class="card">
+          <div class="shap-card-subtitle">Feature contributions · base value 0.002</div>
+
+          <div class="shap-chart-wrapper" id="shap-chart-container">
+            <!-- V14 -->
+            <div class="shap-row">
+              <div class="shap-feature-label">V14</div>
+              <div class="shap-bars-track">
+                <div class="shap-zero-line"></div>
+                <div class="shap-bar positive" style="width: 58%;"></div>
+              </div>
+            </div>
+
+            <!-- V4 -->
+            <div class="shap-row">
+              <div class="shap-feature-label">V4</div>
+              <div class="shap-bars-track">
+                <div class="shap-zero-line"></div>
+                <div class="shap-bar positive" style="width: 42%;"></div>
+              </div>
+            </div>
+
+            <!-- Amount -->
+            <div class="shap-row">
+              <div class="shap-feature-label">Amount</div>
+              <div class="shap-bars-track">
+                <div class="shap-zero-line"></div>
+                <div class="shap-bar positive" style="width: 32%;"></div>
+              </div>
+            </div>
+
+            <!-- V12 -->
+            <div class="shap-row">
+              <div class="shap-feature-label">V12</div>
+              <div class="shap-bars-track">
+                <div class="shap-zero-line"></div>
+                <div class="shap-bar positive" style="width: 22%;"></div>
+              </div>
+            </div>
+
+            <!-- V17 -->
+            <div class="shap-row">
+              <div class="shap-feature-label">V17</div>
+              <div class="shap-bars-track">
+                <div class="shap-zero-line"></div>
+                <div class="shap-bar negative" style="width: 16%;"></div>
+              </div>
+            </div>
+
+            <!-- Time -->
+            <div class="shap-row">
+              <div class="shap-feature-label">Time</div>
+              <div class="shap-bars-track">
+                <div class="shap-zero-line"></div>
+                <div class="shap-bar negative" style="width: 9%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="shap-legend">
+            <div class="legend-item">
+              <div class="legend-color-box" style="background-color: var(--shap-red);"></div>
+              <span>Pushes toward fraud</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color-box" style="background-color: var(--shap-blue);"></div>
+              <span>Pushes toward legitimate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Summary Card -->
+        <div class="card">
+          <h2 class="card-title">Summary</h2>
+          <p class="shap-summary-text" id="shap-summary-text">
+            Unusual values of <strong>V14</strong> and <strong>V4</strong>, combined with a high transaction amount at an odd hour, raised the fraud score from 0.002 to <strong>0.97</strong>.
+          </p>
+
+          <div class="decision-box">
+            <div class="decision-box-label">Final decision</div>
+            <div class="decision-box-value" id="shap-decision-val">Blocked · alert raised</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 4: MODEL COMPARISON (IMAGE 1 & 4) -->
+    <section id="comparison-page" class="page-container">
+      <header class="top-header">
+        <h1 class="page-title">Model performance comparison</h1>
+        <span class="pill-badge">Evaluation</span>
+      </header>
+
+      <div class="grid-comparison">
+        <!-- Left: Metrics on test set Card -->
+        <div class="card">
+          <div class="shap-card-subtitle" style="margin-bottom: 16px;">Metrics on test set</div>
+
+          <!-- Legend -->
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-color-box" style="background-color: var(--chart-logistic);"></div>
+              <span>Logistic Regression</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color-box" style="background-color: var(--chart-rf);"></div>
+              <span>Random Forest</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color-box" style="background-color: var(--chart-xgb);"></div>
+              <span>XGBoost</span>
+            </div>
+          </div>
+
+          <!-- Grouped Bar Chart -->
+          <div class="grouped-bar-chart">
+            <!-- Group 1: Precision -->
+            <div class="metric-group">
+              <div class="bars-cluster">
+                <!-- Logistic -->
+                <div class="bar-col">
+                  <span class="bar-val">0.06</span>
+                  <div class="bar-rect bar-logistic" style="height: 14px;"></div>
+                </div>
+                <!-- RF -->
+                <div class="bar-col">
+                  <span class="bar-val">0.94</span>
+                  <div class="bar-rect bar-rf" style="height: 188px;"></div>
+                </div>
+                <!-- XGB -->
+                <div class="bar-col">
+                  <span class="bar-val">0.92</span>
+                  <div class="bar-rect bar-xgb" style="height: 184px;"></div>
+                </div>
+              </div>
+              <span class="metric-category-label">Precision</span>
+            </div>
+
+            <!-- Group 2: Recall -->
+            <div class="metric-group">
+              <div class="bars-cluster">
+                <!-- Logistic -->
+                <div class="bar-col">
+                  <span class="bar-val">0.92</span>
+                  <div class="bar-rect bar-logistic" style="height: 184px;"></div>
+                </div>
+                <!-- RF -->
+                <div class="bar-col">
+                  <span class="bar-val">0.80</span>
+                  <div class="bar-rect bar-rf" style="height: 160px;"></div>
+                </div>
+                <!-- XGB -->
+                <div class="bar-col">
+                  <span class="bar-val">0.88</span>
+                  <div class="bar-rect bar-xgb" style="height: 176px;"></div>
+                </div>
+              </div>
+              <span class="metric-category-label">Recall</span>
+            </div>
+
+            <!-- Group 3: F1 -->
+            <div class="metric-group">
+              <div class="bars-cluster">
+                <!-- Logistic -->
+                <div class="bar-col">
+                  <span class="bar-val">0.11</span>
+                  <div class="bar-rect bar-logistic" style="height: 24px;"></div>
+                </div>
+                <!-- RF -->
+                <div class="bar-col">
+                  <span class="bar-val">0.86</span>
+                  <div class="bar-rect bar-rf" style="height: 172px;"></div>
+                </div>
+                <!-- XGB -->
+                <div class="bar-col">
+                  <span class="bar-val">0.90</span>
+                  <div class="bar-rect bar-xgb" style="height: 180px;"></div>
+                </div>
+              </div>
+              <span class="metric-category-label">F1</span>
+            </div>
+
+            <!-- Group 4: PR-AUC -->
+            <div class="metric-group">
+              <div class="bars-cluster">
+                <!-- Logistic -->
+                <div class="bar-col">
+                  <span class="bar-val">0.72</span>
+                  <div class="bar-rect bar-logistic" style="height: 144px;"></div>
+                </div>
+                <!-- RF -->
+                <div class="bar-col">
+                  <span class="bar-val">0.85</span>
+                  <div class="bar-rect bar-rf" style="height: 170px;"></div>
+                </div>
+                <!-- XGB -->
+                <div class="bar-col">
+                  <span class="bar-val">0.89</span>
+                  <div class="bar-rect bar-xgb" style="height: 178px;"></div>
+                </div>
+              </div>
+              <span class="metric-category-label">PR-AUC</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: 3 Metric KPI Cards -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="kpi-card">
+            <div class="kpi-label">Best model</div>
+            <div class="kpi-value" style="font-size: 26px;">XGBoost</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">ROC-AUC</div>
+            <div class="kpi-value" style="font-size: 32px;">0.98</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Imbalance handling</div>
+            <div class="kpi-value" style="font-size: 20px;">SMOTE + class weights</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Consensus on Active Simulation Card -->
+      <div class="consensus-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <h3 style="font-size: 16px; font-weight: 700; color: #0f172a;">
+            Live 3-Model Consensus on Active Simulation: <span id="consensus-tx-id" style="color: #2563eb;">TX-88232</span>
+          </h3>
+          <span class="pill-badge" id="consensus-verdict-badge">Consensus: HIGH RISK (BLOCK)</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b; margin-top: 4px;">
+          Comparing how all 3 benchmarked algorithms independently evaluate this specific simulated transaction.
+        </p>
+        <div class="consensus-grid">
+          <div class="consensus-col">
+            <div class="consensus-model-name">Logistic Regression (Linear)</div>
+            <div class="consensus-score" id="consensus-score-lr">0.81</div>
+            <div class="consensus-verdict" id="consensus-verdict-lr" style="color: #dc2626;">High Risk Flag</div>
+          </div>
+          <div class="consensus-col">
+            <div class="consensus-model-name">Random Forest (Bagging)</div>
+            <div class="consensus-score" id="consensus-score-rf">0.94</div>
+            <div class="consensus-verdict" id="consensus-verdict-rf" style="color: #dc2626;">High Risk Flag</div>
+          </div>
+          <div class="consensus-col" style="background-color: #eff6ff; border-color: #bfdbfe;">
+            <div class="consensus-model-name" style="color: #1e40af;">★ Champion: XGBoost (Boosting)</div>
+            <div class="consensus-score" id="consensus-score-xgb" style="color: #1e40af;">0.97</div>
+            <div class="consensus-verdict" id="consensus-verdict-xgb" style="color: #dc2626;">High Risk Flag (BLOCK)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 5: ANALYST QUEUE (IMAGE 5) -->
+    <section id="queue-page" class="page-container">
+      <header class="top-header">
+        <h1 class="page-title">Fraud analyst review queue</h1>
+        <span class="pill-badge" id="queue-badge-count">3 pending</span>
+      </header>
+
+      <div class="queue-list" id="queue-items-container">
+        <!-- Review Item 1 -->
+        <div class="queue-item" id="item-tx-88233">
+          <div class="queue-item-info">
+            <div class="queue-item-title">TX-88233 · $310.55</div>
+            <div class="queue-item-sub">Card 4821 · online retail · new device · top factor: V14</div>
+          </div>
+          <div class="queue-item-actions">
+            <span class="risk-badge">Risk 0.58</span>
+            <button class="btn-queue-action btn-approve" onclick="resolveQueueItem('item-tx-88233', 'Approved')">Approve</button>
+            <button class="btn-queue-action btn-block" onclick="resolveQueueItem('item-tx-88233', 'Blocked')">Block card</button>
+          </div>
+        </div>
+
+        <!-- Review Item 2 -->
+        <div class="queue-item" id="item-tx-88219">
+          <div class="queue-item-info">
+            <div class="queue-item-title">TX-88219 · $1,260.00</div>
+            <div class="queue-item-sub">Card 1093 · travel · foreign IP · top factor: Amount</div>
+          </div>
+          <div class="queue-item-actions">
+            <span class="risk-badge">Risk 0.66</span>
+            <button class="btn-queue-action btn-approve" onclick="resolveQueueItem('item-tx-88219', 'Approved')">Approve</button>
+            <button class="btn-queue-action btn-block" onclick="resolveQueueItem('item-tx-88219', 'Blocked')">Block card</button>
+          </div>
+        </div>
+
+        <!-- Review Item 3 -->
+        <div class="queue-item" id="item-tx-88204">
+          <div class="queue-item-info">
+            <div class="queue-item-title">TX-88204 · $75.20</div>
+            <div class="queue-item-sub">Card 7712 · grocery · unusual hour · top factor: Time</div>
+          </div>
+          <div class="queue-item-actions">
+            <span class="risk-badge">Risk 0.52</span>
+            <button class="btn-queue-action btn-approve" onclick="resolveQueueItem('item-tx-88204', 'Approved')">Approve</button>
+            <button class="btn-queue-action btn-block" onclick="resolveQueueItem('item-tx-88204', 'Blocked')">Block card</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom 3 Status Cards -->
+      <div class="grid-3col" style="margin-top: 12px;">
+        <div class="kpi-card">
+          <div class="kpi-label">Pending reviews</div>
+          <div class="kpi-value" id="kpi-pending-count">3</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Last model retrain</div>
+          <div class="kpi-value" style="font-size: 24px;">2 days ago</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Drift status</div>
+          <div class="kpi-value green" style="font-size: 24px;">Stable</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
