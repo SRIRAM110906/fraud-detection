@@ -1,0 +1,25 @@
+================================================================================
+CREDIT CARD FRAUD DETECTION DATASET INSTRUCTIONS
+================================================================================
+
+This project uses the ULB "Credit Card Fraud Detection" benchmark dataset.
+
+DATASET DETAILS:
+- Total Transactions: 284,807
+- Fraudulent Transactions: 492 (0.172% extreme class imbalance)
+- Columns: Time, V1 to V28 (PCA-transformed features), Amount, Class (0 = Legitimate, 1 = Fraud)
+
+HOW TO DOWNLOAD:
+1. Visit Kaggle: https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
+2. Download the archive and extract 'creditcard.csv'.
+3. Place 'creditcard.csv' directly in this folder:
+   fraud-detection/data/creditcard.csv
+
+AUTOMATIC SYNTHETIC FALLBACK:
+If 'creditcard.csv' is not placed in this folder, the preprocessing pipeline
+will automatically detect its absence, display a warning, and generate a
+synthetic imbalanced dataset (20,000 samples, 0.2% fraud) with matching columns
+(Time, V1-V28, Amount, Class) using scikit-learn's make_classification.
+This guarantees the entire pipeline, training, API, and dashboard run smoothly
+out-of-the-box for evaluation and testing.
+================================================================================

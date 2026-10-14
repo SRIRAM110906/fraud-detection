@@ -1,0 +1,10 @@
+Model,Strategy,PR-AUC,ROC-AUC,F1,Precision,Recall,FPR
+XGBoost,smote,0.153,0.741,0.1538,0.25,0.1111,0.000752
+XGBoost,class_weight,0.1351,0.785,0.0,0.0,0.0,0.0
+Logistic Regression,undersample,0.0183,0.6292,0.0084,0.0042,0.6667,0.353044
+Logistic Regression,smote,0.0151,0.6605,0.0095,0.0048,0.3333,0.15535
+XGBoost,undersample,0.0136,0.6059,0.0047,0.0024,0.3333,0.313956
+Logistic Regression,class_weight,0.0114,0.6704,0.0089,0.0045,0.3333,0.165623
+Random Forest,class_weight,0.0074,0.6592,0.0,0.0,0.0,0.008018
+Random Forest,undersample,0.006,0.6456,0.0076,0.0038,0.5556,0.326735
+Random Forest,smote,0.0049,0.6043,0.0,0.0,0.0,0.030569
